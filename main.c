@@ -12,7 +12,7 @@ int main(int argc, const char *argv[]) {
     for(int i=0;i<argc;i++){
         printf("argument %d: %s\n", i, argv[i]);
     }
-    if(argc < 1){
+    if(argc < 2){
         printf("provide file name");
         return -1;
     }
@@ -20,7 +20,7 @@ int main(int argc, const char *argv[]) {
     //一定要赋初始值NULL
     AVFormatContext *input = NULL;
     if(avformat_open_input(&input, argv[1], NULL, NULL) < 0){
-        printf("failed to open input file");
+        printf("failed to open input file : %s", argv[1]);
         return -2;
     }
 
@@ -30,17 +30,22 @@ int main(int argc, const char *argv[]) {
         return -3;
     }
 
+    printf("duration: %lld, starttime: %lld, bitrate: %lldkb/s\n", input->duration, input->start_time, input->bit_rate / 1024);
+
     //print stream info
     int videoIndex = -1;
     int audioIndex = -1;
+    const char* string = "";
+    av_dump_format(input, 0, string, 0);
     for(int i=0;i<input->nb_streams;i++){
         if(input->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO){
             videoIndex = i;
+//            av_dump_format(input, i, argv[1], 0);
         }else if(input->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO){
             audioIndex = i;
         }
-        av_dump_format(input, i, argv[1], 0);
     }
+    printf("string : %s\n", string);
 
     if(videoIndex == -1){
         return -5;
@@ -59,7 +64,16 @@ int main(int argc, const char *argv[]) {
         return -7;
     }
     avcodec_parameters_to_context(videoContext, input->streams[videoIndex]->codecpar);
-    printf("videoContext: %d\n", videoContext->channels);
+    printf("video bit rate: %lld, %dx%d\n", videoContext->bit_rate, videoContext->width, videoContext->height);
+
+    if(avcodec_open2(videoContext, videoCodec, NULL) < 0){
+        printf(" failed to open video codec context!");
+        return -8;
+    }
+
+
+
+    avcodec_close(videoContext);
     avcodec_free_context(&videoContext);
     avformat_free_context(input);
     return 0;
