@@ -11,4 +11,4 @@ link_libraries(libavcodecd.lib libavdeviced.lib libavfilterd.lib libavformatd.li
 
 link_libraries(msvcrtd.lib)
 
-add_executable(ffmpeg_tests filtering_video.c)
+add_executable(ffmpeg_tests hw_decode.c)
